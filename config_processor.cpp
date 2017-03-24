@@ -30,6 +30,12 @@ void Config_Processor::process(){
     // Open the config file as a ifstream
     ifstream ifs(config_file);
 
+    struct stat buffer;
+    if (stat (config_file, &buffer) != 0) {
+        cout << "Config file does not exist!" << endl;
+        exit(1);
+    }
+
     // Read the config line by line and process each
     string line;
     while(getline(ifs, line)){
@@ -56,6 +62,18 @@ void Config_Processor::process(){
             cerr << "Unkown parameter: " << tokens[0] << endl;
         }
     }
+
+     // if search file or site file DNE, exit with error message
+     if (stat (SEARCH_FILE.c_str(), &buffer) != 0) {
+         cout << "Search file " << search_file << " does not exist!" << endl;
+         exit(1);
+     }:w
+
+     if (stat (SITE_FILE.c_str(), &buffer) != 0) {
+         cout << "Site file " << site_file << " does not exist!" << endl;
+         exit(1);
+     }
+
 
     ifs.close();
 }
