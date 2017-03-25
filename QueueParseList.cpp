@@ -6,12 +6,7 @@
 #include <iostream> // std::cout
 
 // Constructor
-QueueParseList::QueueParseList(vector<string> parselist){
-    //TODO: what are the arguments for constructor?? what does the curl return?
-    for (i = 0; i < sitelist.length(); i++) {
-        queueparselist.push(parselist[i])
-    }
-
+QueueParseList::QueueParseList(){
     // initialize length of queue to 0
     len = 0;
 }

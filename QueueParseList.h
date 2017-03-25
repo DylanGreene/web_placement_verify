@@ -12,10 +12,9 @@
 
 using namespace std;
 
-class QueueSiteList{
+class QueueParseList{
     public:
         // Constructor
-        // arguments???????
         QueueParseList();
 
         // Returns the queue of the file lines
