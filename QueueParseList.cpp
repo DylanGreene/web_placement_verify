@@ -6,7 +6,7 @@
 #include <iostream> // std::cout
 
 // Constructor
-QueueParseList::QueueParseList(){
+QueueParseList::QueueParseList() {
     // initialize length of queue to 0
     len = 0;
 }
