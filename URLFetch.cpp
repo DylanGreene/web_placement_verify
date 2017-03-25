@@ -69,10 +69,3 @@ bool URLFetch::init(CURL *&conn){
 
     return true;
 }
-
-
-
-int main(int argc, char *argv[]){
-    URLFetch url("http://www.google.com");
-    cout << url.fetch() << endl;
-}
