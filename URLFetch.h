@@ -4,23 +4,24 @@
 #define URLFETCH_H
 
 #include <string> // std::string
+#include <curl/curl.h> // libcurl
 
 using namespace std;
 
 class URLFetch{
 public:
     // Constructor
-    URLFetch(string url);
+    URLFetch(string URL);
 
     // Fetches the url
     string fetch();
 
 private:
-    // URL to be fetched
-    string URL;
+    string url; // URL to be fetched
+    string data; // The fetched data
 
-    // Write callback function used to download the data into a string
-    size_t WriteStringCallback(void *contents, size_t size, size_t nmemb, void *userp);
+    // Initialization of the libcurl connection
+    bool init(CURL *&conn);
 };
 
 #endif
