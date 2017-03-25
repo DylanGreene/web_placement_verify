@@ -1,7 +1,7 @@
 // Implementation of the Vectorize Class members
 // Takes each line of a file and stores it an a std::vector
 
-#include "vectorize.h"
+#include "Vectorize.h"
 
 #include <iostream> // std::cout
 
