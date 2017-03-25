@@ -64,12 +64,12 @@ void Config_Processor::process(){
     }
 
      // if search file or site file DNE, exit with error message
-     if (stat (SEARCH_FILE.c_str(), &buffer) != 0) {
+     if (stat (search_file.c_str(), &buffer) != 0) {
          cout << "Search file " << search_file << " does not exist!" << endl;
          exit(1);
      }:w
 
-     if (stat (SITE_FILE.c_str(), &buffer) != 0) {
+     if (stat (site_file.c_str(), &buffer) != 0) {
          cout << "Site file " << site_file << " does not exist!" << endl;
          exit(1);
      }
