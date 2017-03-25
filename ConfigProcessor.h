@@ -1,16 +1,16 @@
 // Process the config file for the web placement verifier
 
-#ifndef CONFIG_PROCESSOR_H
-#define CONFIG_PROCESSOR_H
+#ifndef CONFIGPROCESSOR_H
+#define CONFIGPROCESSOR_H
 
 #include <string> // std::string
 
 using namespace std;
 
-class Config_Processor{
+class ConfigProcessor{
 public:
     // Constructor sets the config file
-    Config_Processor(string file="Config.txt");
+    ConfigProcessor(string file="Config.txt");
 
     // Displays the settings from the config file
     void display();

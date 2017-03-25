@@ -1,7 +1,7 @@
-// Implementation of the Config_Processor Class members
+// Implementation of the ConfigProcessor Class members
 // Process the config file for the web placement verifier
 
-#include "config_processor.h"
+#include "ConfigProcessor.h"
 
 #include <string> // std::string
 #include <fstream> // std::ifstream
@@ -11,7 +11,7 @@
 #include <iostream> // std::cout, std::endl
 
 // Constructor sets the config file and default values
-Config_Processor::Config_Processor(string file){
+ConfigProcessor::ConfigProcessor(string file){
     config_file = file;
 
     // Default values for each param
@@ -26,7 +26,7 @@ Config_Processor::Config_Processor(string file){
 }
 
 // Processes the config file and sets members
-void Config_Processor::process(){
+void ConfigProcessor::process(){
     // Open the config file as a ifstream
     ifstream ifs(config_file);
 
@@ -79,7 +79,7 @@ void Config_Processor::process(){
 }
 
 // Displays the conifg settings
-void Config_Processor::display(){
+void ConfigProcessor::display(){
     cout    << "PERIOD_FETCH: " << period_fetch << "\n"
             << "NUM_FETCH: "    << num_fetch    << "\n"
             << "NUM_PARSE: "    << num_parse    << "\n"
@@ -88,18 +88,18 @@ void Config_Processor::display(){
 }
 
 // Get functions
-int Config_Processor::get_period_fetch(){
+int ConfigProcessor::get_period_fetch(){
     return period_fetch;
 }
-int Config_Processor::get_num_fetch(){
+int ConfigProcessor::get_num_fetch(){
     return num_fetch;
 }
-int Config_Processor::get_num_parse(){
+int ConfigProcessor::get_num_parse(){
     return num_parse;
 }
-string Config_Processor::get_search_file(){
+string ConfigProcessor::get_search_file(){
     return search_file;
 }
-string Config_Processor::get_site_file(){
+string ConfigProcessor::get_site_file(){
     return site_file;
 }
