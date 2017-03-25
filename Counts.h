@@ -24,14 +24,6 @@ class Counts {
         // returns the count of searchWord
         int getCount(string searchWord);
 
-        // sets the count of searchWord to c
-        // TODO: is this necessary??
-        void setCount(string searchWord, int c);
-
-        // increments/decrements count of searchWord by 1
-        void increment(string searchWord);
-        void decrement(string searchWord);
-
     private:
         unordered_map<string, int> counts;
 

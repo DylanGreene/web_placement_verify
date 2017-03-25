@@ -49,17 +49,3 @@ int Counts::getCount(string searchWord) {
     // if found, return
     return counts[searchWord];
 }
-
-// sets the count of searchWord to c
-void Counts::setCount(string searchWord, int c) {
-    counts[searchWord] = c;
-}
-
-// increments/decrements count of search word by 1
-void Counts::increment(string searchWord) {
-    counts[searchWord] = counts[searchWord] + 1;
-}
-
-void Counts::decrement(string searchWord) {
-    counts[searchWord] = counts[searchWord] - 1;
-}
