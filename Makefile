@@ -1,17 +1,18 @@
 CC=g++
 CFLAGS=-c -Wall -std=c++11
-LDFLAGS=-lcurl
-SOURCES=.cpp
-OBJECTS=$(SOURCES:.cpp=.o)
+LDFLAGS=-lcurl -lrt
+SOURCES=SiteTester.cpp ConfigProcessor.cpp Counts.cpp QueueParseItem.cpp QueueParseList.cpp QueueSiteList.cpp Time.cpp URLFetch.cpp Vectorize.cpp
+DEPENDS=$(SOURCES)
+OBJECTS=SiteTester.o ConfigProcessor.o Counts.o QueueParseItem.o QueueParseList.o QueueSiteList.o Time.o URLFetch.o Vectorize.o
+DEPENDS=$(SOURCES)
 EXECUTABLE=site_tester
 
-
-all: $(SOURCES) $(EXECUTABLE)
+all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-    $(CC) $(LDFLAGS) $(OBJECTS) -o $@
+    $(CC) $(LDFLAGS) $^ -o $@
 
-.ccp.o:
+$(OBJECTS): $(DEPENDS)
     $(CC) $(CFLAGS) $< -o $@
 
 clean:

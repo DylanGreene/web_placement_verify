@@ -20,9 +20,6 @@ ConfigProcessor::ConfigProcessor(string file){
     num_parse = 1;
     search_file = "Search.txt";
     site_file = "Sites.txt";
-
-    // Call the processing method
-    process();
 }
 
 // Processes the config file and sets members
@@ -85,6 +82,11 @@ void ConfigProcessor::display(){
             << "NUM_PARSE: "    << num_parse    << "\n"
             << "SEARCH_FILE: "  << search_file  << "\n"
             << "SITE_FILE: "    << site_file    << endl;
+}
+
+// Setter
+void ConfigProcessor::set_config_file(string file){
+    config_file = file;
 }
 
 // Get functions

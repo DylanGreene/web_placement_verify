@@ -12,8 +12,14 @@ public:
     // Constructor sets the config file
     ConfigProcessor(string file="Config.txt");
 
+    // Performs the processing of the config file
+    void process();
+
     // Displays the settings from the config file
     void display();
+
+    // Setters
+    void set_config_file(string file);
 
     // Getters
     int get_period_fetch();
@@ -32,9 +38,6 @@ private:
     int num_parse; // Number of parsing threads
     string search_file; // File containing the search strings
     string site_file; // File containing the sites to query
-
-    // Performs the processing of the config file
-    void process();
 };
 
 #endif
