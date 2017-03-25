@@ -2,7 +2,6 @@
 
 #include "URLFetch.h"
 
-#include <curl/curl.h> // libcurl
 #include <iostream>
 
 // Constructor
@@ -10,30 +9,70 @@ URLFetch::URLFetch(string URL){
     url = URL;
 }
 
+// Fetch the URL and return a string of the data
 string URLFetch::fetch(){
     CURL *curl;
     CURLcode res;
-    string data;
 
-    curl = curl_easy_init();
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteStringCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+    // Make sure the libcurl connnection inits successfully
+    if(init(curl)){
+        // Get the URL!
         res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
 
-        return data;
+        // Check for errors
+        if(res != CURLE_OK){
+            cerr << "Failed on curl_easy_perform: " << curl_easy_strerror(res);
+        }else{
+            return data;
+        }
+
+        // Cleanup curl stuff
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
     }
+
+    return "";
+}
+
+// Write callback function used to download the data into a string
+static size_t WriteStringCallback(void *contents, size_t size, size_t nmemb, void *userp){
+    ((string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
 }
 
 // libcurl connection initialization
-bool init(CURL *&conn){
-    
+bool URLFetch::init(CURL *&conn){
+    CURLcode code;
+    conn = curl_easy_init();
+    if(conn){
+        code = curl_easy_setopt(conn, CURLOPT_URL, url.c_str());
+        if(code != CURLE_OK) {
+            cerr << "Failed to set URL" << endl;
+            return false;
+        }
+
+        code = curl_easy_setopt(conn, CURLOPT_WRITEFUNCTION, WriteStringCallback);
+        if(code != CURLE_OK) {
+            cerr << "Failed to set writer" << endl;
+            return false;
+        }
+
+        code = curl_easy_setopt(conn, CURLOPT_WRITEDATA, &data);
+        if(code != CURLE_OK) {
+            cerr << "Failed to set write data" << endl;
+            return false;
+        }
+    }else{
+        cerr << "Failed to create CURL connection" << endl;
+        return false;
+    }
+
     return true;
 }
 
-size_t URLFetch::WriteStringCallback(void *contents, size_t size, size_t nmemb, void *userp){
-    ((string*)userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
+
+
+int main(int argc, char *argv[]){
+    URLFetch url("http://www.google.com");
+    cout << url.fetch() << endl;
 }
