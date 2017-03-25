@@ -1,5 +1,5 @@
 
-#include "time.h"
+#include "Time.h"
 
 // Constructor sets intial time by updating private members
 Time::Time(){
@@ -32,10 +32,13 @@ int Time::getMilliSecond(){
 // Function for use in checking time and just printing date and time string
 // Format: YYYY:MM:DD HH:MM:SS:MMM
 std::string Time::timeString(){
+    updateTime();
     std::ostringstream oss;
     oss << std::setfill('0');
-    oss << tm.tm_hour << ":" << std::setw(2) << tm.tm_mon << ":" << tm.tm_mday << " "; // YYYY:MM:DD
-    oss << std::setw(2) << tm.tm_hour << ":" << tm.tm_min << ":" << tm.tm_sec; //HH:MM:SS
+    oss << tm.tm_year + 1900 << "-" << std::setw(2) << tm.tm_mon + 1 << "-";
+    oss << std::setw(2) << tm.tm_mday << " "; // YYYY:MM:DD
+    oss << std::setw(2) << tm.tm_hour << ":" << std::setw(2) << tm.tm_min;
+    oss << ":" << std::setw(2) << tm.tm_sec; //HH:MM:SS
     oss << "." << std::setw(3) << getMilliSecond();
     return oss.str();
 }
