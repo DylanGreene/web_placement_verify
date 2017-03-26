@@ -18,7 +18,7 @@ unordered_map<string, int> Counts::getCounts() {
 // inputs a data string and a vector of search words and returns a map with
 // the counts of those search words
 void Counts::createCounts(string data, vector<string> searchWords) {
-    int i;
+    size_t i;
     for (i = 0; i < searchWords.size(); i++) {
         int c = 0;
 

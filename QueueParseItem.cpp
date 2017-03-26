@@ -3,6 +3,12 @@
 
  #include "QueueParseItem.h"
 
+// default Constructor
+QueueParseItem::QueueParseItem() {
+    data = "";
+    site = "";
+}
+
  // Constructor
  QueueParseItem::QueueParseItem(string s, string d) {
     data = d;

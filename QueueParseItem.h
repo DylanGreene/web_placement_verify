@@ -7,8 +7,12 @@
 
 using namespace std;
 
-class QueueSiteList{
+class QueueParseItem{
     public:
+
+        // default constructor
+        QueueParseItem();
+
         // Constructor that creates a queue parse item with arguments to set site and data
         QueueParseItem(string s, string d);
 

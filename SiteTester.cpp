@@ -21,7 +21,7 @@ using namespace std;
 timer_t timerid;
 
 // Global Variables
-ConfigProcessor config();
+ConfigProcessor config;
 
 void signalHandler(int sig, siginfo_t *si, void *uc){
     // Avoid stray signals
@@ -45,7 +45,7 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
         string data = fetched.fetch();
 
         // create queue item to push into pParseList
-        QueueParseItem item(curr_url, data)
+        QueueParseItem item(curr_url, data);
 
         // Put the data into a ParseList Queue
         pParseList.push(item);
@@ -68,7 +68,7 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
 // Main Execution
 int main(int argc, char *argv[]){
     // Parse the config file
-    string configfile = "Config.txt"
+    string configfile = "Config.txt";
     if(argc == 2){
         configfile = argv[1];
     }

@@ -32,8 +32,8 @@ class QueueParseList{
         int len;  // length of queue
 
         // initialized the mutex lock
-        pthread_mutex_t pthreadInitializer();
-        pthread_mutex_t lock;
+        /*pthread_mutex_t pthreadInitializer();
+        pthread_mutex_t lock;*/
 
         // conditional variables??
 };

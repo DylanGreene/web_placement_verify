@@ -33,8 +33,8 @@ class QueueSiteList{
         int len;
 
         // initialized the mutex lock
-        void pthreadInitializer();
-        pthread_mutex_t lock;
+        /*void pthreadInitializer();
+        pthread_mutex_t lock;*/
 
         // conditional variables??
 };

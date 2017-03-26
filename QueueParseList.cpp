@@ -12,9 +12,9 @@ QueueParseList::QueueParseList() {
 }
 
 // Initialize mutex lock
-void QueueSiteList::pthreadInitializer() {
+/*void QueueParseList::pthreadInitializer() {
     lock = PTHREAD_MUTEX_INITIALIZER;
-}
+}*/
 
 // Returns the queue
 queue<QueueParseItem> QueueParseList::getQueue(){

@@ -7,17 +7,17 @@
 
 // Constructor that inputs a vector of sites and puts them into a queue
 QueueSiteList::QueueSiteList(vector<string> sitelist){
-    int i;
-    for (i = 0; i < sitelist.length(); i++) {
-        queuesitelist.push(sitelist[i])
+    size_t i;
+    for (i = 0; i < sitelist.size(); i++) {
+        queuesitelist.push(sitelist[i]);
     }
     len = 0;
 }
 
 // Initialized the mutex lock
-void QueueSiteList::pthreadInitializer() {
+/*void QueueSiteList::pthreadInitializer() {
     lock = PTHREAD_MUTEX_INITIALIZER;
-}
+}*/
 
 // Returns the vectorized STL vector
 queue<string> QueueSiteList::getQueue() {

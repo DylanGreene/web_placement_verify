@@ -3,6 +3,7 @@
 
 #include "Vectorize.h"
 
+#include <fstream>
 #include <iostream> // std::cout
 
 // Constructor

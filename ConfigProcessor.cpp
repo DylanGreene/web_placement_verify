@@ -9,6 +9,7 @@
 #include <iterator> // std::istream_iterator
 #include <vector> // std::vector
 #include <iostream> // std::cout, std::endl
+#include <sys/stat.h>
 
 // Constructor sets the config file and default values
 ConfigProcessor::ConfigProcessor(string file){
@@ -28,7 +29,7 @@ void ConfigProcessor::process(){
     ifstream ifs(config_file);
 
     struct stat buffer;
-    if (stat (config_file, &buffer) != 0) {
+    if (stat (config_file.c_str(), &buffer) != 0) {
         cout << "Config file does not exist!" << endl;
         exit(1);
     }
@@ -64,7 +65,7 @@ void ConfigProcessor::process(){
      if (stat (search_file.c_str(), &buffer) != 0) {
          cout << "Search file " << search_file << " does not exist!" << endl;
          exit(1);
-     }:w
+     }
 
      if (stat (site_file.c_str(), &buffer) != 0) {
          cout << "Site file " << site_file << " does not exist!" << endl;
