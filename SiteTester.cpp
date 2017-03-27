@@ -58,10 +58,11 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
         Counts counts;
         counts.createCounts(item.getData(), phrases.getVector());
         cout << item.getSite() << endl;
-        for(auto it = counts.getCounts().begin(); it != counts.getCounts().end(); ++it){
+
+        auto c = counts.getCounts();
+        for(auto it = c.begin(); it != c.end(); ++it){
             cout << "\t" << it->first << " " << it->second << endl;
         }
-
     }
 }
 
@@ -93,7 +94,7 @@ int main(int argc, char *argv[]){
     timer_create(CLOCKID, &sev, &timerid);
 
     // Specify timer settings
-    its.it_value.tv_sec = 15;
+    its.it_value.tv_sec = 5;
     its.it_value.tv_nsec = 0;
     its.it_interval.tv_sec = its.it_value.tv_sec;
     its.it_interval.tv_nsec = its.it_value.tv_nsec;

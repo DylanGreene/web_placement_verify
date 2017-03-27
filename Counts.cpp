@@ -18,28 +18,22 @@ unordered_map<string, int> Counts::getCounts() {
 // inputs a data string and a vector of search words and returns a map with
 // the counts of those search words
 void Counts::createCounts(string data, vector<string> searchWords) {
-    size_t i;
-    for (i = 0; i < searchWords.size(); i++) {
-        int c = 0;
-
-        // find first occurance of the word
-        size_t nPos = data.find(searchWords[i], 0);
-
-        // whie not end of string, keep looking for searchword in data
-        while (nPos != string::npos) {
-            c++;
-            nPos = data.find(searchWords[i], nPos+1);
+    for(auto it = searchWords.begin(); it != searchWords.end(); ++it){
+        int count = 0;
+        size_t found = data.find(*it);
+        while(found != string::npos){
+            count++;
+            found = data.find(*it, found+1);
         }
-
-        // insert word and count into map
-        counts[searchWords[i]] = c;
+        // insert word and count into hash table
+        counts[*it] = count;
     }
 }
 
 // returns the count of searchWords
 int Counts::getCount(string searchWord) {
     // check if searchWord in counts
-    std::unordered_map<string, int>::const_iterator found = counts.find(searchWord);
+    auto found = counts.find(searchWord);
 
     // if not found, return 0
     if (found == counts.end()) {

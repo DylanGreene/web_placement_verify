@@ -7,11 +7,11 @@
 
 // Constructor that inputs a vector of sites and puts them into a queue
 QueueSiteList::QueueSiteList(vector<string> sitelist){
-    size_t i;
-    for (i = 0; i < sitelist.size(); i++) {
-        queuesitelist.push(sitelist[i]);
-    }
     len = 0;
+    for(auto it = sitelist.begin(); it != sitelist.end(); ++it){
+        queuesitelist.push(*it);
+        len++;
+    }
 }
 
 // Initialized the mutex lock
