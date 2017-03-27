@@ -16,6 +16,9 @@ class QueueSiteList{
         // Constructor that inputs vector of sites and creates a queue
         QueueSiteList(vector<string> sitelist);
 
+        // initializes the queue to sitelist
+        void initialize(vector<string> sitelist);
+
         // Returns the queue of the file lines
         queue<string> getQueue();
 

@@ -14,6 +14,13 @@ QueueSiteList::QueueSiteList(vector<string> sitelist){
     }
 }
 
+void QueueSiteList::initialize(vector<string> sitelist) {
+  len = 0;
+  for(auto it = sitelist.begin(); it != sitelist.end(); ++it){
+      queuesitelist.push(*it);
+      len++;
+  }
+}
 // Initialized the mutex lock
 /*void QueueSiteList::pthreadInitializer() {
     lock = PTHREAD_MUTEX_INITIALIZER;

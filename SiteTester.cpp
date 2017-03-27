@@ -8,8 +8,7 @@
 #include "ConfigProcessor.h"
 #include "Counts.h"
 #include "QueueParseItem.h"
-#include "QueueParseList.h"
-#include "QueueSiteList.h"
+#include "ConcurrentQueue.h"
 #include "Time.h"
 #include "URLFetch.h"
 #include "Vectorize.h"
@@ -32,7 +31,8 @@ timer_t timerid;
 ConfigProcessor config;
 pthread_t* fetchThreads;
 pthread_t* parseThreads;
-
+ConcurrentQueue pParseList;
+ConcurrentQueue qSiteList
 
 // Catch SIGINT (Ctrl-C)
 void SIGINTHandler(int sig){
@@ -52,38 +52,8 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
 
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
-    QueueSiteList qSiteList(urls.getVector());
-    QueueParseList pParseList;
+    qSiteList.initialize(urls.getVector());
 
-    // Get data for each URL
-    while(qSiteList.length() > 0){
-        // critical section (while loop on cond not ready)
-
-
-        }
-
-        URLFetch fetched(curr_url);
-        string data = fetched.fetch();
-
-        // create queue item to push into pParseList
-        QueueParseItem item(curr_url, data);
-
-        // Put the data into a ParseList Queue
-        pParseList.push(item);
-    }
-
-    // Get counts of each search word
-    while(pParseList.length() > 0){
-
-        Counts counts;
-        counts.createCounts(item.getData(), phrases.getVector());
-        cout << item.getSite() << endl;
-
-        auto c = counts.getCounts();
-        for(auto it = c.begin(); it != c.end(); ++it){
-            cout << "\t" << it->first << " " << it->second << endl;
-        }
-    }
 }
 
 // Main Execution
@@ -104,10 +74,10 @@ int main(int argc, char *argv[]){
     parseThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_parse());
 
     for (int i = 0; i < config.get_num_fetch(); i++) {
-        pthread_create(&fetchThreads[i], NULL, initializeThread, NULL);
+        pthread_create(&fetchThreads[i], NULL, fetcher, NULL);
     }
     for (int i = 0; i < config.get_num_parse(); i++) {
-        pthread_create(&parseThreads[i], NULL, initializeThread, NULL);
+        pthread_create(&parseThreads[i], NULL, parser, NULL);
     }
 
     // Sructs for the timer event scheduler
@@ -138,11 +108,6 @@ int main(int argc, char *argv[]){
     while (1);
 }
 
-void* initializeThread() {
-    // keep thread waiting
-    pthread_cond_wait();
-}
-
 void put(void* q, void* item) {
     q.push(item);
 }
@@ -151,27 +116,47 @@ void* get(void* q) {
     return q.pop();
 }
 
-void* fetcher(QueueSiteList qSiteList) {
-    pthread_mutex_lock(&mutex);
-    while (qSiteList.length() == 0) {
-        pthread_cond_wait(&empty, &mutex)
+
+void* fetcher() {
+    while(qSiteList.length() > 0) {
+        pthread_mutex_lock(&mutex);
+        while (qSiteList.length() == 0) {
+            pthread_cond_wait(&empty, &mutex)
+        }
+        string curr_url = qSiteList.pop();
+
+        URLFetch fetched(curr_url);
+        string data = fetched.fetch();
+
+        // create queue item to push into pParseList
+        QueueParseItem item(curr_url, data);
+
+        // Put the data into a ParseList Queue
+        pParseList.push(item);
+        pthread_cond_signal(&fill);
+        pthread_mutex_unlock(&mutex);
     }
-    string curr_url = qSiteList.pop();
-
-    pthread_cond_signal(&fill);
-    pthread_mutex_unlock(&mutex);
-
-    return curr_url;
+      return curr_url;
 }
 
-void* parser(QueueParseList qParseList) {
-    pthread_mutex_lock(&mutex);
-    while (qParseList.length() == 0) {
-        pthread_cond_wait(&full, &mutex)
-    }
-    QueueParseItem item = pParseList.pop();
-    pthread_cond_signal(&empty);
-    pthread_mutex_unlock(&mutex);
+void* parser() {
+    while(pParseList.length() > 0){
+
+        pthread_mutex_lock(&mutex);
+        while (qParseList.length() == 0) {
+            pthread_cond_wait(&full, &mutex)
+        }
+        QueueParseItem item = pParseList.pop();
+        Counts counts;
+        counts.createCounts(item.getData(), phrases.getVector());
+        cout << item.getSite() << endl;
+
+        auto c = counts.getCounts();
+        for(auto it = c.begin(); it != c.end(); ++it){
+            cout << "\t" << it->first << " " << it->second << endl;
+        }
+        pthread_cond_signal(&empty);
+        pthread_mutex_unlock(&mutex);
 
     return item;
 }
