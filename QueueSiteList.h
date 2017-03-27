@@ -11,8 +11,6 @@
 
 using namespace std;
 
-// TODO: does this need a QueueSiteItem??
-
 class QueueSiteList{
     public:
         // Constructor that inputs vector of sites and creates a queue

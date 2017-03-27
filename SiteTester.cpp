@@ -3,6 +3,7 @@
 #include <iostream>
 #include <csignal>
 #include <ctime>
+#include <pthread.h>
 
 #include "ConfigProcessor.h"
 #include "Counts.h"
@@ -15,6 +16,13 @@
 
 using namespace std;
 
+// Function declarations
+void* fetcher();  // producer
+void* parser();   // consumer
+void* initializeThread();
+cond_t empty, fill;
+mutex_t mutex;
+
 // Signal configuration
 #define CLOCKID CLOCK_REALTIME
 #define SIG SIGUSR1
@@ -22,6 +30,9 @@ timer_t timerid;
 
 // Global Variables
 ConfigProcessor config;
+pthread_t* fetchThreads;
+pthread_t* parseThreads;
+
 
 // Catch SIGINT (Ctrl-C)
 void SIGINTHandler(int sig){
@@ -46,7 +57,11 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
 
     // Get data for each URL
     while(qSiteList.length() > 0){
-        string curr_url = qSiteList.pop();
+        // critical section (while loop on cond not ready)
+
+
+        }
+
         URLFetch fetched(curr_url);
         string data = fetched.fetch();
 
@@ -59,7 +74,6 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
 
     // Get counts of each search word
     while(pParseList.length() > 0){
-        QueueParseItem item = pParseList.pop();
 
         Counts counts;
         counts.createCounts(item.getData(), phrases.getVector());
@@ -85,8 +99,16 @@ int main(int argc, char *argv[]){
     config.set_config_file(configfile);
     config.process();
 
-    // Make treads for things
-    
+    // Make threads for things
+    fetchThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_fetch());
+    parseThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_parse());
+
+    for (int i = 0; i < config.get_num_fetch(); i++) {
+        pthread_create(&fetchThreads[i], NULL, initializeThread, NULL);
+    }
+    for (int i = 0; i < config.get_num_parse(); i++) {
+        pthread_create(&parseThreads[i], NULL, initializeThread, NULL);
+    }
 
     // Sructs for the timer event scheduler
     struct sigevent sev;
@@ -114,4 +136,42 @@ int main(int argc, char *argv[]){
 
     // Run the scheduler
     while (1);
+}
+
+void* initializeThread() {
+    // keep thread waiting
+    pthread_cond_wait();
+}
+
+void put(void* q, void* item) {
+    q.push(item);
+}
+
+void* get(void* q) {
+    return q.pop();
+}
+
+void* fetcher(QueueSiteList qSiteList) {
+    pthread_mutex_lock(&mutex);
+    while (qSiteList.length() == 0) {
+        pthread_cond_wait(&empty, &mutex)
+    }
+    string curr_url = qSiteList.pop();
+
+    pthread_cond_signal(&fill);
+    pthread_mutex_unlock(&mutex);
+
+    return curr_url;
+}
+
+void* parser(QueueParseList qParseList) {
+    pthread_mutex_lock(&mutex);
+    while (qParseList.length() == 0) {
+        pthread_cond_wait(&full, &mutex)
+    }
+    QueueParseItem item = pParseList.pop();
+    pthread_cond_signal(&empty);
+    pthread_mutex_unlock(&mutex);
+
+    return item;
 }
