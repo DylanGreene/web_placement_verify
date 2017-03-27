@@ -6,8 +6,6 @@
 #include <string> // std::string
 #include <vector> // std::vector
 #include <queue>  // std::queue
-#include <mutex>
-#include <thread>
 
 using namespace std;
 

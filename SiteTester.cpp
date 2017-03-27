@@ -4,6 +4,7 @@
 #include <csignal>
 #include <ctime>
 #include <pthread.h>
+#include <cstdlib>
 
 #include "ConfigProcessor.h"
 #include "Counts.h"
@@ -16,9 +17,8 @@
 using namespace std;
 
 // Function declarations
-void* fetcher();  // producer
-void* parser();   // consumer
-void* initializeThread();
+void *fetcher(void *);  // producer
+void *parser(void *);   // consumer
 
 // Signal configuration
 #define CLOCKID CLOCK_REALTIME
@@ -31,8 +31,8 @@ pthread_t* fetchThreads;
 pthread_t* parseThreads;
 ConcurrentQueue<QueueParseItem> qParse;
 ConcurrentQueue<string> qSites;
-cond_t empty, fill;
-mutex_t mutexSiteQueue, mutexParseQueue;
+pthread_cond_t empty, fill;
+pthread_mutex_t mutexSiteQueue, mutexParseQueue;
 
 // Catch SIGINT (Ctrl-C)
 void signalHandler(int sig){
@@ -80,10 +80,10 @@ int main(int argc, char *argv[]){
     parseThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_parse());
 
     for (int i = 0; i < config.get_num_fetch(); i++) {
-        pthread_create(&fetchThreads[i], NULL, fetcher, NULL);
+        pthread_create(&fetchThreads[i], NULL, &fetcher, NULL);
     }
     for (int i = 0; i < config.get_num_parse(); i++) {
-        pthread_create(&parseThreads[i], NULL, parser, NULL);
+        pthread_create(&parseThreads[i], NULL, &parser, NULL);
     }
 
     // Sructs for the timer event scheduler
@@ -115,11 +115,11 @@ int main(int argc, char *argv[]){
 }
 
 // Fetches a URL from the queue and pushes it into the parse queue
-void* fetcher() {
+void *fetcher(void *args) {
     // Get the URL to be fetched from the queue
     pthread_mutex_lock(&mutexSiteQueue);
-    while (qSites.length() == 0) {
-        pthread_cond_wait(&empty, &mutexSiteQueue)
+    while(qSites.length() == 0){
+        pthread_cond_wait(&empty, &mutexSiteQueue);
     }
     string curr_url = qSites.pop();
     pthread_cond_signal(&fill);
@@ -136,14 +136,16 @@ void* fetcher() {
     pthread_mutex_lock(&mutexParseQueue);
     qParse.push(item);
     pthread_mutex_unlock(&mutexParseQueue);
+
+    return 0;
 }
 
 // Gets string to be parsed from Queue and gets the word counts
-void* parser() {
+void *parser(void *args) {
     // Get the string from the parse queue
     pthread_mutex_lock(&mutexParseQueue);
-    while (qParseList.length() == 0) {
-        pthread_cond_wait(&fill, &mutex)
+    while(qParseList.length() == 0){
+        pthread_cond_wait(&fill, &mutex);
     }
     QueueParseItem item = qParse.pop();
     pthread_cond_signal(&empty);
@@ -158,4 +160,6 @@ void* parser() {
     for(auto it = c.begin(); it != c.end(); ++it){
         cout << "\t" << it->first << " " << it->second << endl;
     }
+
+    return 0;
 }
