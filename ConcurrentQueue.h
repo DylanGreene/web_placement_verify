@@ -25,7 +25,7 @@ class ConcurrentQueue{
 
         // Push and pop functions
         void push(T s);
-        string pop();
+        T pop();
 
         // get size of queue
         int length();

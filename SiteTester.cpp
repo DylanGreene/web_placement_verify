@@ -29,8 +29,8 @@ timer_t timerid;
 ConfigProcessor config;
 pthread_t* fetchThreads;
 pthread_t* parseThreads;
-ConcurrentQueue qParse;
-ConcurrentQueue qSites;
+ConcurrentQueue<QueueParseItem> qParse;
+ConcurrentQueue<string> qSites;
 cond_t empty, fill;
 mutex_t mutexSiteQueue, mutexParseQueue;
 
