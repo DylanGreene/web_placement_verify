@@ -23,6 +23,12 @@ timer_t timerid;
 // Global Variables
 ConfigProcessor config;
 
+// Catch SIGINT (Ctrl-C)
+void SIGINTHandler(int sig){
+    cout << "Exiting gracefully" << endl;
+    exit(0);
+}
+
 void signalHandler(int sig, siginfo_t *si, void *uc){
     // Avoid stray signals
     if (si->si_value.sival_ptr != &timerid) return;
@@ -68,6 +74,9 @@ void signalHandler(int sig, siginfo_t *si, void *uc){
 
 // Main Execution
 int main(int argc, char *argv[]){
+    // Set up to catch SIGINT
+    signal(SIGINT, SIGINTHandler);
+
     // Parse the config file
     string configfile = "Config.txt";
     if(argc == 2){
@@ -75,6 +84,9 @@ int main(int argc, char *argv[]){
     }
     config.set_config_file(configfile);
     config.process();
+
+    // Make treads for things
+    
 
     // Sructs for the timer event scheduler
     struct sigevent sev;
