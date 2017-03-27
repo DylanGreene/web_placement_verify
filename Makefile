@@ -10,31 +10,31 @@ EXECUTABLE=site_tester
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-    $(CC) $^ -o $@ $(LDFLAGS)
+		$(CC) $^ -o $@ $(LDFLAGS)
 
 ConfigProcessor.o: ConfigProcessor.cpp ConfigProcessor.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 Counts.o: Counts.cpp Counts.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 QueueParseItem.o: QueueParseItem.cpp QueueParseItem.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 ConcurrentQueue.o: ConcurrentQueue.cpp ConcurrentQueue.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 Time.o: Time.cpp Time.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 URLFetch.o: URLFetch.cpp URLFetch.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 Vectorize.o: Vectorize.cpp Vectorize.h
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 SiteTester.o: SiteTester.cpp
-    $(CC) $(CFLAGS) $<
+		$(CC) $(CFLAGS) $<
 
 clean:
-    rm $(EXECUTABLE) $(OBJECTS)
+		rm $(EXECUTABLE) $(OBJECTS)
