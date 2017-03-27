@@ -5,14 +5,14 @@
 #include <ctime>
 #include <pthread.h>
 #include <cstdlib>
+#include <utility>
 
 #include "ConfigProcessor.h"
 #include "Counts.h"
-#include "QueueParseItem.h"
-#include "ConcurrentQueue.h"
 #include "Time.h"
 #include "URLFetch.h"
 #include "Vectorize.h"
+#include "ConcurrentQueue.h"
 
 using namespace std;
 
@@ -29,7 +29,7 @@ timer_t timerid;
 ConfigProcessor config;
 pthread_t* fetchThreads;
 pthread_t* parseThreads;
-ConcurrentQueue<QueueParseItem> qParse;
+ConcurrentQueue<pair<string, string> > qParse;
 ConcurrentQueue<string> qSites;
 Vectorize phrases;
 pthread_cond_t empty, filled;
@@ -119,10 +119,11 @@ int main(int argc, char *argv[]){
 void *fetcher(void *args){
     // Get the URL to be fetched from the queue
     pthread_mutex_lock(&mutexSiteQueue);
-    while(qSites.length() == 0){
+    while(qSites.empty()){
         pthread_cond_wait(&empty, &mutexSiteQueue);
     }
-    string curr_url = qSites.pop();
+    auto curr_url = qSites.front();
+    qSites.pop();
     pthread_cond_signal(&filled);
     pthread_mutex_unlock(&mutexSiteQueue);
 
@@ -130,12 +131,9 @@ void *fetcher(void *args){
     URLFetch fetched(curr_url);
     string data = fetched.fetch();
 
-    // Create queue item to push into qParse
-    QueueParseItem item(curr_url, data);
-
     // Put the data into a ParseList Queue
     pthread_mutex_lock(&mutexParseQueue);
-    qParse.push(item);
+    qParse.push(make_pair(curr_url, data));
     pthread_mutex_unlock(&mutexParseQueue);
 
     return 0;
@@ -145,21 +143,22 @@ void *fetcher(void *args){
 void *parser(void *args){
     // Get the string from the parse queue
     pthread_mutex_lock(&mutexParseQueue);
-    while(qParse.length() == 0){
+    while(qParse.empty()){
         pthread_cond_wait(&filled, &mutexParseQueue);
     }
-    QueueParseItem item = qParse.pop();
+    auto item = qParse.front();
+    qParse.pop();
     pthread_cond_signal(&empty);
     pthread_mutex_unlock(&mutexParseQueue);
 
     // Get the word counts
     Counts counts;
-    counts.createCounts(item.getData(), phrases.getVector());
+    counts.createCounts(item.second, phrases.getVector());
 
-    cout << item.getSite() << endl;
+    cout << item.first << endl;
     auto c = counts.getCounts();
     for(auto it = c.begin(); it != c.end(); ++it){
-        cout << "\t" << it->first << " " << it->second << endl;
+        cout << it->first << " " << it->second << endl;
     }
 
     return 0;

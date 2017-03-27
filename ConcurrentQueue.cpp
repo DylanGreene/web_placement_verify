@@ -2,51 +2,41 @@
 
 #include "ConcurrentQueue.h"
 
-#include <iostream> // std::cout
+template <class T>
+bool ConcurrentQueue<T>::empty() const{  // Return truee if empty
+    return concurrentqueue.empty();
+}
 
-// Default constructor
-template <typename T>
-ConcurrentQueue<T>::ConcurrentQueue(){
-    len = 0;
+template <class T>
+void ConcurrentQueue<T>::push(T const& elem){
+    concurrentqueue.push(elem);
+}
+
+template <class T>
+void ConcurrentQueue<T>::pop(){
+    if(concurrentqueue.empty()){
+        throw out_of_range("Stack<>::pop(): empty queue");
+    }
+    // Remove element
+    concurrentqueue.pop();
+}
+
+template <class T>
+T ConcurrentQueue<T>::front() const {
+    if(concurrentqueue.empty()){
+        throw out_of_range("Stack<>::top(): empty queue");
+    }
+    return concurrentqueue.front();
 }
 
 // Initializer that inputs a vector of sites and puts them into a queue
-template <typename T>
+template <class T>
 void ConcurrentQueue<T>::initialize(vector<T> list){
-    len = 0;
-    for(auto it = list.begin(); it != list.end(); ++it){
+    for(auto it = list.begin(); it != list.end(); ++it) {
         concurrentqueue.push(*it);
-        len++;
     }
 }
 
-// Returns the queue
-template <typename T>
-queue<T> ConcurrentQueue<T>::getQueue() {
-    return concurrentqueue;
-}
-
-// push and pop functions
-template <typename T>
-void ConcurrentQueue<T>::push(T s) {
-    concurrentqueue.push(s);
-    len++;
-}
-
-template <typename T>
-T ConcurrentQueue<T>::pop() {
-    T s;
-    s = concurrentqueue.front();
-    concurrentqueue.pop();
-    len--;
-    if (len < 0) {
-        len = 0;
-    }
-    return s;
-}
-
-// returns length of queue
-template <typename T>
-int ConcurrentQueue<T>::length() {
-    return len;
-}
+// Allow for explicit instantiation
+template class ConcurrentQueue<string>;
+template class ConcurrentQueue<pair<string, string> >;

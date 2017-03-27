@@ -1,10 +1,7 @@
 CC=g++
 CFLAGS=-c -Wall -std=c++11
 LDFLAGS=-lcurl -lrt -pthread
-SOURCES=SiteTester.cpp ConfigProcessor.cpp Counts.cpp QueueParseItem.cpp ConcurrentQueue.cpp Time.cpp URLFetch.cpp Vectorize.cpp
-DEPENDS=$(SOURCES)
-OBJECTS=ConfigProcessor.o Counts.o QueueParseItem.o ConcurrentQueue.o Time.o URLFetch.o Vectorize.o SiteTester.o
-DEPENDS=$(SOURCES)
+OBJECTS=ConfigProcessor.o Counts.o ConcurrentQueue.o Time.o URLFetch.o Vectorize.o SiteTester.o
 EXECUTABLE=site_tester
 
 all: $(EXECUTABLE)
@@ -16,9 +13,6 @@ ConfigProcessor.o: ConfigProcessor.cpp ConfigProcessor.h
 	$(CC) $(CFLAGS) $<
 
 Counts.o: Counts.cpp Counts.h
-	$(CC) $(CFLAGS) $<
-
-QueueParseItem.o: QueueParseItem.cpp QueueParseItem.h
 	$(CC) $(CFLAGS) $<
 
 ConcurrentQueue.o: ConcurrentQueue.cpp ConcurrentQueue.h
