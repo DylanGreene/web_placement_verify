@@ -19,8 +19,6 @@ using namespace std;
 void* fetcher();  // producer
 void* parser();   // consumer
 void* initializeThread();
-cond_t empty, fill;
-mutex_t mutex;
 
 // Signal configuration
 #define CLOCKID CLOCK_REALTIME
@@ -31,35 +29,37 @@ timer_t timerid;
 ConfigProcessor config;
 pthread_t* fetchThreads;
 pthread_t* parseThreads;
-ConcurrentQueue pParseList;
-ConcurrentQueue qSiteList
+ConcurrentQueue qParse;
+ConcurrentQueue qSites;
+cond_t empty, fill;
+mutex_t mutexSiteQueue, mutexParseQueue;
 
 // Catch SIGINT (Ctrl-C)
-void SIGINTHandler(int sig){
+void signalHandler(int sig){
     cout << "Exiting gracefully" << endl;
     exit(0);
 }
 
-void signalHandler(int sig, siginfo_t *si, void *uc){
+void timerHandler(int sig, siginfo_t *si, void *uc){
     // Avoid stray signals
     if (si->si_value.sival_ptr != &timerid) return;
 
     Time tm;
     cout << tm.timeString() << endl;
 
-    // Get the search phrases into a vector
-    Vectorize phrases(config.get_search_file());
-
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
-    qSiteList.initialize(urls.getVector());
+    qSites.initialize(urls.getVector());
 
+    // Broadcast threads to wake up
+    pthread_cond_broadcast(&empty);
 }
 
 // Main Execution
 int main(int argc, char *argv[]){
-    // Set up to catch SIGINT
-    signal(SIGINT, SIGINTHandler);
+    // Set up to catch SIGINT, SIGHUP
+    signal(SIGINT, signalHandler);
+    signal(SIGHUP, signalHandler);
 
     // Parse the config file
     string configfile = "Config.txt";
@@ -68,6 +68,12 @@ int main(int argc, char *argv[]){
     }
     config.set_config_file(configfile);
     config.process();
+
+    // Get the search phrases into a vector
+    Vectorize phrases(config.get_search_file());
+    // Get the URLS to be fetched
+    Vectorize urls(config.get_site_file());
+    qSites.initialize(urls.getVector());
 
     // Make threads for things
     fetchThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_fetch());
@@ -87,7 +93,7 @@ int main(int argc, char *argv[]){
 
     // Establish the handler for timer signal
     sa.sa_flags = SA_SIGINFO;
-    sa.sa_sigaction = signalHandler;
+    sa.sa_sigaction = timerHandler;
     sigemptyset(&sa.sa_mask);
     sigaction(SIG, &sa, NULL);
 
@@ -108,55 +114,48 @@ int main(int argc, char *argv[]){
     while (1);
 }
 
-void put(void* q, void* item) {
-    q.push(item);
-}
-
-void* get(void* q) {
-    return q.pop();
-}
-
-
+// Fetches a URL from the queue and pushes it into the parse queue
 void* fetcher() {
-    while(qSiteList.length() > 0) {
-        pthread_mutex_lock(&mutex);
-        while (qSiteList.length() == 0) {
-            pthread_cond_wait(&empty, &mutex)
-        }
-        string curr_url = qSiteList.pop();
-
-        URLFetch fetched(curr_url);
-        string data = fetched.fetch();
-
-        // create queue item to push into pParseList
-        QueueParseItem item(curr_url, data);
-
-        // Put the data into a ParseList Queue
-        pParseList.push(item);
-        pthread_cond_signal(&fill);
-        pthread_mutex_unlock(&mutex);
+    // Get the URL to be fetched from the queue
+    pthread_mutex_lock(&mutexSiteQueue);
+    while (qSites.length() == 0) {
+        pthread_cond_wait(&empty, &mutexSiteQueue)
     }
-      return curr_url;
+    string curr_url = qSites.pop();
+    pthread_cond_signal(&fill);
+    pthread_mutex_unlock(&mutexSiteQueue)
+
+    // Fetch the URL
+    URLFetch fetched(curr_url);
+    string data = fetched.fetch();
+
+    // Create queue item to push into qParse
+    QueueParseItem item(curr_url, data);
+
+    // Put the data into a ParseList Queue
+    pthread_mutex_lock(&mutexParseQueue);
+    qParse.push(item);
+    pthread_mutex_unlock(&mutexParseQueue);
 }
 
+// Gets string to be parsed from Queue and gets the word counts
 void* parser() {
-    while(pParseList.length() > 0){
+    // Get the string from the parse queue
+    pthread_mutex_lock(&mutexParseQueue);
+    while (qParseList.length() == 0) {
+        pthread_cond_wait(&fill, &mutex)
+    }
+    QueueParseItem item = qParse.pop();
+    pthread_cond_signal(&empty);
+    pthread_mutex_unlock(&mutexParseQueue);
 
-        pthread_mutex_lock(&mutex);
-        while (qParseList.length() == 0) {
-            pthread_cond_wait(&full, &mutex)
-        }
-        QueueParseItem item = pParseList.pop();
-        Counts counts;
-        counts.createCounts(item.getData(), phrases.getVector());
-        cout << item.getSite() << endl;
+    // Get the word counts
+    Counts counts;
+    counts.createCounts(item.getData(), phrases.getVector());
 
-        auto c = counts.getCounts();
-        for(auto it = c.begin(); it != c.end(); ++it){
-            cout << "\t" << it->first << " " << it->second << endl;
-        }
-        pthread_cond_signal(&empty);
-        pthread_mutex_unlock(&mutex);
-
-    return item;
+    cout << item.getSite() << endl;
+    auto c = counts.getCounts();
+    for(auto it = c.begin(); it != c.end(); ++it){
+        cout << "\t" << it->first << " " << it->second << endl;
+    }
 }

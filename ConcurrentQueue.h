@@ -18,7 +18,7 @@ class ConcurrentQueue{
         ConcurrentQueue();
 
         // initializes the queue to inputted vector
-        void ConcurrentQueue::initialize(vector<T> list);
+        void initialize(vector<T> list);
 
         // Returns the queue of the file lines
         queue<T> getQueue();
