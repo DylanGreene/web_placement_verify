@@ -12,6 +12,9 @@ class Vectorize{
 public:
     // Constructor sets the file to vectorize
     Vectorize(string file_name);
+    Vectorize();
+
+    void setFile(string file_name);
 
     // Returns the vector of the file lines
     vector<string> getVector();

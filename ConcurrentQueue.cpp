@@ -6,7 +6,9 @@
 
 // Default constructor
 template <typename T>
-ConcurrentQueue<T>::ConcurrentQueue() {}
+ConcurrentQueue<T>::ConcurrentQueue(){
+    len = 0;
+}
 
 // Initializer that inputs a vector of sites and puts them into a queue
 template <typename T>

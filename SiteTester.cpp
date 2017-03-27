@@ -31,7 +31,8 @@ pthread_t* fetchThreads;
 pthread_t* parseThreads;
 ConcurrentQueue<QueueParseItem> qParse;
 ConcurrentQueue<string> qSites;
-pthread_cond_t empty, fill;
+Vectorize phrases;
+pthread_cond_t empty, filled;
 pthread_mutex_t mutexSiteQueue, mutexParseQueue;
 
 // Catch SIGINT (Ctrl-C)
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]){
     config.process();
 
     // Get the search phrases into a vector
-    Vectorize phrases(config.get_search_file());
+    phrases.setFile(config.get_search_file());
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
     qSites.initialize(urls.getVector());
@@ -115,15 +116,15 @@ int main(int argc, char *argv[]){
 }
 
 // Fetches a URL from the queue and pushes it into the parse queue
-void *fetcher(void *args) {
+void *fetcher(void *args){
     // Get the URL to be fetched from the queue
     pthread_mutex_lock(&mutexSiteQueue);
     while(qSites.length() == 0){
         pthread_cond_wait(&empty, &mutexSiteQueue);
     }
     string curr_url = qSites.pop();
-    pthread_cond_signal(&fill);
-    pthread_mutex_unlock(&mutexSiteQueue)
+    pthread_cond_signal(&filled);
+    pthread_mutex_unlock(&mutexSiteQueue);
 
     // Fetch the URL
     URLFetch fetched(curr_url);
@@ -141,11 +142,11 @@ void *fetcher(void *args) {
 }
 
 // Gets string to be parsed from Queue and gets the word counts
-void *parser(void *args) {
+void *parser(void *args){
     // Get the string from the parse queue
     pthread_mutex_lock(&mutexParseQueue);
-    while(qParseList.length() == 0){
-        pthread_cond_wait(&fill, &mutex);
+    while(qParse.length() == 0){
+        pthread_cond_wait(&filled, &mutexParseQueue);
     }
     QueueParseItem item = qParse.pop();
     pthread_cond_signal(&empty);
