@@ -57,7 +57,7 @@ void ConfigProcessor::process(){
         }else if(tokens[0] == "SITE_FILE"){
             site_file = tokens[1];
         }else{ // Not a valid config parameter
-            cerr << "Unkown parameter: " << tokens[0] << endl;
+            cerr << "Unkown config parameter: " << line << endl;
         }
     }
 
