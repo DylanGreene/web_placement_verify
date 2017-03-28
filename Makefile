@@ -2,7 +2,7 @@ CC=g++
 CFLAGS=-c -Wall -std=c++11
 LDFLAGS=-lcurl -lrt -pthread
 OBJECTS=ConfigProcessor.o Counts.o ConcurrentQueue.o Time.o URLFetch.o Vectorize.o SiteTester.o
-EXECUTABLE=site_tester
+EXECUTABLE=site-tester
 
 all: $(EXECUTABLE)
 
