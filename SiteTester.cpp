@@ -35,12 +35,26 @@ ConcurrentQueue<string> qSites;
 Vectorize phrases;
 pthread_cond_t empty, filled;
 pthread_mutex_t mutexSiteQueue, mutexParseQueue;
+bool loop;
 
 // Catch SIGINT (Ctrl-C)
 void signalHandler(int sig){
     cout << "Exiting gracefully" << endl;
-    
-    exit(0);
+    loop = false;
+    // Wait for all the threads
+    int ret;
+    for(int t = 0; t < config.get_num_fetch(); t++){
+        ret = pthread_join(fetchThreads[t], NULL);
+        if(ret){
+            cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
+        }
+    }
+    for(int t = 0; t < config.get_num_parse(); t++){
+        ret = pthread_join(parseThreads[t], NULL);
+        if(ret){
+            cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
+        }
+    }
 }
 
 void timerHandler(int sig, siginfo_t *si, void *uc){
@@ -82,11 +96,18 @@ int main(int argc, char *argv[]){
     fetchThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_fetch());
     parseThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_parse());
 
+    int ret;
     for (int i = 0; i < config.get_num_fetch(); i++) {
-        pthread_create(&fetchThreads[i], NULL, &fetcher, NULL);
+        ret = pthread_create(&fetchThreads[i], NULL, &fetcher, NULL);
+        if(ret){
+            cerr << "Unable to create fetch thread; return code: " << ret << endl;
+       }
     }
     for (int i = 0; i < config.get_num_parse(); i++) {
-        pthread_create(&parseThreads[i], NULL, &parser, NULL);
+        ret = pthread_create(&parseThreads[i], NULL, &parser, NULL);
+        if(ret){
+            cerr << "Unable to create parse thread; return code: " << ret << endl;
+       }
     }
 
     // Sructs for the timer event scheduler
@@ -107,19 +128,20 @@ int main(int argc, char *argv[]){
     timer_create(CLOCKID, &sev, &timerid);
 
     // Specify timer settings
-    its.it_value.tv_sec = 5;
+    its.it_value.tv_sec = config.get_period_fetch();
     its.it_value.tv_nsec = 0;
     its.it_interval.tv_sec = its.it_value.tv_sec;
     its.it_interval.tv_nsec = its.it_value.tv_nsec;
     timer_settime(timerid, 0, &its, NULL);
 
     // Run the scheduler
-    while (1);
+    loop = true;
+    while(loop);
 }
 
 // Fetches a URL from the queue and pushes it into the parse queue
 void *fetcher(void *args){
-    while(true){
+    while(loop){
         // Get the URL to be fetched from the queue
         pthread_mutex_lock(&mutexSiteQueue);
         while(qSites.empty()){
@@ -144,7 +166,7 @@ void *fetcher(void *args){
 
 // Gets string to be parsed from Queue and gets the word counts
 void *parser(void *args){
-    while(true){
+    while(loop){
         pair<string, string> item;
         // Get the string from the parse queue
         pthread_mutex_lock(&mutexParseQueue);
