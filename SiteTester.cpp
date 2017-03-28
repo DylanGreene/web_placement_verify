@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <utility>
 #include <functional>
+#include <fstream>
 
 #include "ConfigProcessor.h"
 #include "Counts.h"
@@ -35,6 +36,10 @@ ConcurrentQueue<string> qSites;
 Vectorize phrases;
 pthread_cond_t empty, filled;
 pthread_mutex_t mutexSiteQueue, mutexParseQueue;
+int fileNum = 1;
+Time timeObject;
+string currTime;
+ofstream output;
 bool loop;
 
 // Catch SIGINT (Ctrl-C)
@@ -61,8 +66,10 @@ void timerHandler(int sig, siginfo_t *si, void *uc){
     // Avoid stray signals
     if (si->si_value.sival_ptr != &timerid) return;
 
-    Time tm;
-    cout << tm.timeString() << endl;
+    //create output file
+    fileNum++;
+    currTime = timeObject.timeString();
+    cout << currTime << endl;
 
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
@@ -91,6 +98,12 @@ int main(int argc, char *argv[]){
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
     qSites.initialize(urls.getVector());
+
+    currTime = timeObject.timeString();
+
+    string filename = to_string(fileNum)+".csv";
+    //cout << "writing to: " << filename << endl;
+    output.open(filename);
 
     // Make threads for things
     fetchThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_fetch());
@@ -181,11 +194,18 @@ void *parser(void *args){
         // Get the word counts
         Counts counts;
         counts.createCounts(item.second, phrases.getVector());
-        cout << item.first << endl;
+
+        // output to .csv file
+        // date and time, search phrase, site, count of seach phrase from site
+
+        //cout << item.first << endl;
+        //output << item.first << endl;
         auto c = counts.getCounts();
         for(auto it = c.begin(); it != c.end(); ++it){
-            cout << it->first << " " << it->second << endl;
+            output << currTime << ", " << it->first << ", " << item.first << ", " << it->second << endl;
+            //cout << it->first << " " << it->second << endl;
         }
+        output.close();
     }
     return 0;
 }
