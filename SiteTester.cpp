@@ -46,21 +46,6 @@ bool loop;
 void signalHandler(int sig){
     cout << "Exiting gracefully" << endl;
     loop = false;
-    // Wait for all the threads
-/*    int ret;
-    for(int t = 0; t < config.get_num_fetch(); t++){
-        ret = pthread_join(fetchThreads[t], NULL);
-        if(ret){
-            cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
-        }
-    }
-    for(int t = 0; t < config.get_num_parse(); t++){
-        ret = pthread_join(parseThreads[t], NULL);
-        if(ret){
-            cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
-        }
-    }*/
-    exit(0);
 }
 
 void timerHandler(int sig, siginfo_t *si, void *uc){
@@ -158,6 +143,30 @@ int main(int argc, char *argv[]){
     // Run the scheduler
     loop = true;
     while(loop);
+
+    // Exit nicely after done looping
+
+    // Close the old output file if it is open
+    if(output){
+        output.close();
+    }
+
+    // Wait for all the threads
+    pthread_cond_broadcast(&empty);
+    for(int t = 0; t < config.get_num_fetch(); t++){
+        ret = pthread_join(fetchThreads[t], NULL);
+        if(ret){
+            cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
+        }
+    }
+    pthread_cond_broadcast(&filled);
+    for(int t = 0; t < config.get_num_parse(); t++){
+        ret = pthread_join(parseThreads[t], NULL);
+        if(ret){
+            cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
+        }
+    }
+    exit(0);
 }
 
 // Fetches a URL from the queue and pushes it into the parse queue
@@ -166,8 +175,10 @@ void *fetcher(void *args){
         // Get the URL to be fetched from the queue
         pthread_mutex_lock(&mutexSiteQueue);
         while(qSites.empty()){
+            if(!loop) break;
             pthread_cond_wait(&empty, &mutexSiteQueue);
         }
+        if(!loop) break;
         auto curr_url = qSites.front();
         qSites.pop();
         pthread_mutex_unlock(&mutexSiteQueue);
@@ -192,8 +203,10 @@ void *parser(void *args){
         // Get the string from the parse queue
         pthread_mutex_lock(&mutexParseQueue);
         while(qParse.empty()){
+            if(!loop) break;
             pthread_cond_wait(&filled, &mutexParseQueue);
         }
+        if(!loop) break;
         item = make_pair<string, string>(qParse.front().first, qParse.front().second);
         qParse.pop();
         pthread_cond_signal(&empty);
