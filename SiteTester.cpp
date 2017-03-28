@@ -35,7 +35,7 @@ ConcurrentQueue<pair<string, string> > qParse;
 ConcurrentQueue<string> qSites;
 Vectorize phrases;
 pthread_cond_t empty, filled;
-pthread_mutex_t mutexSiteQueue, mutexParseQueue;
+pthread_mutex_t mutexSiteQueue, mutexParseQueue, mutexOutputFile;
 int fileNum = 1;
 Time timeObject;
 string currTime;
@@ -67,14 +67,17 @@ void timerHandler(int sig, siginfo_t *si, void *uc){
     // Avoid stray signals
     if (si->si_value.sival_ptr != &timerid) return;
 
-    fileNum++;
-    currTime = timeObject.timeString();
-    cout << currTime << endl;
+    // Close the old output file if it is open
+    if(output){
+        output.close();
+    }
 
     // create output file
+    fileNum++;
+    currTime = timeObject.timeString();
     string filename = to_string(fileNum)+".csv";
-    //cout << "writing to: " << filename << endl;
     output.open(filename);
+    output << "Time, Phrase, Site, Count" << endl;
 
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
@@ -104,11 +107,11 @@ int main(int argc, char *argv[]){
     Vectorize urls(config.get_site_file());
     qSites.initialize(urls.getVector());
 
+    // Open the csv output file
     currTime = timeObject.timeString();
-
     string filename = to_string(fileNum)+".csv";
-    //cout << "writing to: " << filename << endl;
     output.open(filename);
+    output << "Time, Phrase, Site, Count" << endl;
 
     // Make threads for things
     fetchThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_fetch());
@@ -167,11 +170,11 @@ void *fetcher(void *args){
         }
         auto curr_url = qSites.front();
         qSites.pop();
+        pthread_mutex_unlock(&mutexSiteQueue);
 
         // Fetch the URL
         URLFetch fetched(curr_url);
         string data = fetched.fetch();
-        pthread_mutex_unlock(&mutexSiteQueue);
 
         // Put the data into a ParseList Queue
         pthread_mutex_lock(&mutexParseQueue);
@@ -199,18 +202,12 @@ void *parser(void *args){
         // Get the word counts
         Counts counts;
         counts.createCounts(item.second, phrases.getVector());
-
-        // output to .csv file
-        // date and time, search phrase, site, count of seach phrase from site
-
-        cout << item.first << endl;
-        //output << item.first << endl;
         auto c = counts.getCounts();
         for(auto it = c.begin(); it != c.end(); ++it){
+            pthread_mutex_lock(&mutexOutputFile);
             output << currTime << ", " << it->first << ", " << item.first << ", " << it->second << endl;
-            cout << it->first << " " << it->second << endl;
+            pthread_mutex_unlock(&mutexOutputFile);
         }
-        //output.close();
     }
     return 0;
 }
