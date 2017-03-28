@@ -47,7 +47,7 @@ void signalHandler(int sig){
     cout << "Exiting gracefully" << endl;
     loop = false;
     // Wait for all the threads
-    int ret;
+/*    int ret;
     for(int t = 0; t < config.get_num_fetch(); t++){
         ret = pthread_join(fetchThreads[t], NULL);
         if(ret){
@@ -59,17 +59,22 @@ void signalHandler(int sig){
         if(ret){
             cerr << "Return code from pthread_join() for fetch thead: " << ret << endl;
         }
-    }
+    }*/
+    exit(0);
 }
 
 void timerHandler(int sig, siginfo_t *si, void *uc){
     // Avoid stray signals
     if (si->si_value.sival_ptr != &timerid) return;
 
-    //create output file
     fileNum++;
     currTime = timeObject.timeString();
     cout << currTime << endl;
+
+    // create output file
+    string filename = to_string(fileNum)+".csv";
+    //cout << "writing to: " << filename << endl;
+    output.open(filename);
 
     // Get the URLS to be fetched
     Vectorize urls(config.get_site_file());
@@ -174,7 +179,7 @@ void *fetcher(void *args){
         pthread_cond_signal(&filled);
         pthread_mutex_unlock(&mutexParseQueue);
     }
-  return 0;
+    return 0;
 }
 
 // Gets string to be parsed from Queue and gets the word counts
@@ -198,14 +203,14 @@ void *parser(void *args){
         // output to .csv file
         // date and time, search phrase, site, count of seach phrase from site
 
-        //cout << item.first << endl;
+        cout << item.first << endl;
         //output << item.first << endl;
         auto c = counts.getCounts();
         for(auto it = c.begin(); it != c.end(); ++it){
             output << currTime << ", " << it->first << ", " << item.first << ", " << it->second << endl;
-            //cout << it->first << " " << it->second << endl;
+            cout << it->first << " " << it->second << endl;
         }
-        output.close();
+        //output.close();
     }
     return 0;
 }
