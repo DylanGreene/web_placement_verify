@@ -39,6 +39,7 @@ pthread_mutex_t mutexSiteQueue, mutexParseQueue;
 // Catch SIGINT (Ctrl-C)
 void signalHandler(int sig){
     cout << "Exiting gracefully" << endl;
+    
     exit(0);
 }
 
@@ -54,7 +55,6 @@ void timerHandler(int sig, siginfo_t *si, void *uc){
     qSites.initialize(urls.getVector());
 
     // Broadcast threads to wake up
-    cout << "broadcasting" << endl;
     pthread_cond_broadcast(&empty);
 }
 
@@ -82,14 +82,12 @@ int main(int argc, char *argv[]){
     fetchThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_fetch());
     parseThreads = (pthread_t*) malloc(sizeof(pthread_t)*config.get_num_parse());
 
-    cout << "making threads" << endl;
     for (int i = 0; i < config.get_num_fetch(); i++) {
         pthread_create(&fetchThreads[i], NULL, &fetcher, NULL);
     }
     for (int i = 0; i < config.get_num_parse(); i++) {
         pthread_create(&parseThreads[i], NULL, &parser, NULL);
     }
-    cout << "threads made" << endl;
 
     // Sructs for the timer event scheduler
     struct sigevent sev;
@@ -121,57 +119,51 @@ int main(int argc, char *argv[]){
 
 // Fetches a URL from the queue and pushes it into the parse queue
 void *fetcher(void *args){
-  cout << "in fetcher" << endl;
-  while (!qSites.empty()) {
-    // Get the URL to be fetched from the queue
-    pthread_mutex_lock(&mutexSiteQueue);
-    while(qSites.empty()){
-        pthread_cond_wait(&empty, &mutexSiteQueue);
+    while(true){
+        // Get the URL to be fetched from the queue
+        pthread_mutex_lock(&mutexSiteQueue);
+        while(qSites.empty()){
+            pthread_cond_wait(&empty, &mutexSiteQueue);
+        }
+        auto curr_url = qSites.front();
+        qSites.pop();
+
+        // Fetch the URL
+        URLFetch fetched(curr_url);
+        string data = fetched.fetch();
+        pthread_mutex_unlock(&mutexSiteQueue);
+
+        // Put the data into a ParseList Queue
+        pthread_mutex_lock(&mutexParseQueue);
+        qParse.push(make_pair(curr_url, data));
+        pthread_cond_signal(&filled);
+        pthread_mutex_unlock(&mutexParseQueue);
     }
-    auto curr_url = qSites.front();
-    qSites.pop();
-    cout << "popping in fetcher" << endl;
-
-    // Fetch the URL
-    URLFetch fetched(curr_url);
-    string data = fetched.fetch();
-    cout << "current url being fetched... " << curr_url << endl;
-    pthread_mutex_unlock(&mutexSiteQueue);
-
-    // Put the data into a ParseList Queue
-    pthread_mutex_lock(&mutexParseQueue);
-    qParse.push(make_pair(curr_url, data));
-    cout << "pushed" << endl;
-    pthread_cond_signal(&filled);
-    cout << "filled signaled" << endl;
-    pthread_mutex_unlock(&mutexParseQueue);
-  }
   return 0;
 }
 
 // Gets string to be parsed from Queue and gets the word counts
 void *parser(void *args){
-  cout << "in parser" << endl;
-  pair<string, string> item;
-  // Get the string from the parse queue
-  pthread_mutex_lock(&mutexParseQueue);
-  while(qParse.empty()){
-      pthread_cond_wait(&filled, &mutexParseQueue);
-  }
-  item = make_pair<string, string>(qParse.front().first, qParse.front().second);
-  qParse.pop();
-  cout << "popping in parser" << endl;
-  pthread_cond_signal(&empty);
-  pthread_mutex_unlock(&mutexParseQueue);
+    while(true){
+        pair<string, string> item;
+        // Get the string from the parse queue
+        pthread_mutex_lock(&mutexParseQueue);
+        while(qParse.empty()){
+            pthread_cond_wait(&filled, &mutexParseQueue);
+        }
+        item = make_pair<string, string>(qParse.front().first, qParse.front().second);
+        qParse.pop();
+        pthread_cond_signal(&empty);
+        pthread_mutex_unlock(&mutexParseQueue);
 
-  // Get the word counts
-  Counts counts;
-  counts.createCounts(item.second, phrases.getVector());
-  cout << "creating counts" << endl;
-  //cout << item.first << endl;
-  auto c = counts.getCounts();
-  for(auto it = c.begin(); it != c.end(); ++it){
-      cout << it->first << " " << it->second << endl;
-  }
-  return 0;
+        // Get the word counts
+        Counts counts;
+        counts.createCounts(item.second, phrases.getVector());
+        cout << item.first << endl;
+        auto c = counts.getCounts();
+        for(auto it = c.begin(); it != c.end(); ++it){
+            cout << it->first << " " << it->second << endl;
+        }
+    }
+    return 0;
 }
